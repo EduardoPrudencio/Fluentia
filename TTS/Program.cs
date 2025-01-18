@@ -1,52 +1,63 @@
 ﻿using System.Speech.Synthesis;
 
-string[] listOfFrases = new string[11];
-
-listOfFrases[0] = "Hi, Alex! How is the API for taxes going?";
-listOfFrases[1] = "Hello, Mr. Smith! It’s almost done. I just need to test it.";
-listOfFrases[2] = "That’s great! Can you explain how it works?";
-listOfFrases[3] = "Sure! It takes user income as input and calculates the tax amount.";
-listOfFrases[4] = "Does it handle errors, like wrong inputs?";
-listOfFrases[5] = "Yes, I added validation for all inputs.";
-listOfFrases[6] = "Excellent! When will it be ready for deployment?";
-listOfFrases[7] = "I’ll finish testing by tomorrow and deploy it.";
-listOfFrases[8] = "Good job! Oh, by the way, have you read that Naruto chapter?";
-listOfFrases[9] = "Yes! It was amazing. The fight scene was so cool.";
-listOfFrases[10] = "Yes, and it was so emotional. Naruto never gives up!";
-
-string combinedText = string.Join(" ", listOfFrases);
-
-
-try
+internal class Program
 {
-    using (SpeechSynthesizer synthesizer = new SpeechSynthesizer())
+    private static void Main(string[] args)
     {
-        foreach (InstalledVoice voice in synthesizer.GetInstalledVoices())
+
+        string path = "";
+        string[] lines = File.ReadAllLines(path).Where(line => !string.IsNullOrWhiteSpace(line))
+         .ToArray();
+
+        string[] oddLines = lines
+          .Where((line, index) => (index + 1) % 2 != 0)
+          .ToArray();
+
+        string[] listOfFrases = new string[oddLines.Length];
+
+        for (int i = 0; i < oddLines.Length; i++)
         {
-            VoiceInfo info = voice.VoiceInfo;
-            Console.WriteLine("Voice Name: " + info.Name);
+            listOfFrases[i] = oddLines[i]
+                .Replace("Gerente: ","")
+                .Replace("Programador: ", "")
+                .TrimStart();
         }
 
-        synthesizer.SelectVoice("Microsoft Zira Desktop");
 
-        synthesizer.SetOutputToWaveFile("FullText.wav");
-        synthesizer.Speak(combinedText);
+        string combinedText = string.Join(" ", listOfFrases);
+        path = path.Replace("FullText.txt", "");
 
-        for (int i = 0; i < listOfFrases.Length; i++)
+        try
         {
-            string nameAudio = listOfFrases[i].Substring(0, (listOfFrases[i].Length - 1));
-            nameAudio = $"{nameAudio}.wav";
+            using (SpeechSynthesizer synthesizer = new SpeechSynthesizer())
+            {
+                foreach (InstalledVoice voice in synthesizer.GetInstalledVoices())
+                {
+                    VoiceInfo info = voice.VoiceInfo;
+                    Console.WriteLine("Voice Name: " + info.Name);
+                }
 
-            synthesizer.SetOutputToWaveFile(nameAudio);
-            synthesizer.Speak(listOfFrases[i]);
+                synthesizer.SelectVoice("Microsoft Zira Desktop");
+
+                synthesizer.SetOutputToWaveFile($"{path}FullText.wav");
+                synthesizer.Speak(combinedText);
+
+                for (int i = 0; i < listOfFrases.Length; i++)
+                {
+                    string nameAudio = listOfFrases[i].Substring(0, listOfFrases[i].Length - 1);
+                    nameAudio = $"{nameAudio}.wav";
+
+                    synthesizer.SetOutputToWaveFile($"{path}{nameAudio}");
+                    synthesizer.Speak(listOfFrases[i]);
+                }
+
+                Console.WriteLine("Áudio sintetizado e salvo em 'meuAudio.wav'.");
+                // Console.ReadLine();
+            }
         }
-
-        Console.WriteLine("Áudio sintetizado e salvo em 'meuAudio.wav'.");
-        Console.ReadLine();
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 }
-catch (Exception ex)
-{
-    Console.WriteLine(ex.Message);
-}
-
